@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${event.title} + ' · EMS'">Event &middot; EMS</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+          rel="stylesheet">
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <style>
+        body { background-color: #f8f9fa; }
+        .event-hero {
+            height: 320px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: rgba(255,255,255,0.5);
+            font-size: 6rem;
+            border-radius: 0.5rem;
+        }
+        .event-hero.with-image {
+            background-size: cover;
+            background-position: center;
+        }
+        .meta-icon { width: 24px; color: #6c757d; }
+    </style>
+</head>
+<body class="d-flex flex-column min-vh-100">
+
+<div th:replace="~{fragments/layout :: navbar}"></div>
+
+<main class="flex-grow-1 py-5">
+    <div class="container">
+        <a th:href="@{/events}" class="btn btn-link mb-3 px-0">
+            <i class="bi bi-arrow-left"></i> Back to events
+        </a>
+
+        <div class="row g-4">
+            <div class="col-lg-8">
+                <div class="event-hero mb-4"
+                     th:classappend="${event.coverImageUrl != null} ? 'with-image'"
+                     th:style="${event.coverImageUrl != null}
+                               ? 'background-image: url(' + ${event.coverImageUrl} + ')'
+                               : ''">
+                    <i th:if="${event.coverImageUrl == null}" class="bi bi-calendar2-week"></i>
+                </div>
+
+                <p class="text-muted small mb-1">
+                    <i class="bi bi-tag"></i>
+                    <span th:text="${event.categoryName}">Category</span>
+                </p>
+                <h1 class="mb-3" th:text="${event.title}">Title</h1>
+
+                <p class="text-muted">
+                    Organized by <strong th:text="${event.organizerName}">Organizer</strong>
+                </p>
+
+                <hr>
+
+                <h2 class="h5 mt-4">About this event</h2>
+                <p class="text-secondary" style="white-space: pre-wrap;"
+                   th:text="${event.description}">Description</p>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="card shadow-sm sticky-top" style="top: 1rem;">
+                    <div class="card-body">
+
+                        <div class="mb-3">
+        <span class="badge fs-6"
+              th:classappend="${event.free} ? 'bg-success' : 'bg-primary'"
+              th:text="${event.free ? 'Free entry' : event.price + ' KGS'}">price</span>
+                        </div>
+
+                        <!-- Flash messages -->
+                        <div th:if="${successMessage}" class="alert alert-success small mb-3"
+                             th:text="${successMessage}">msg</div>
+                        <div th:if="${errorMessage}" class="alert alert-danger small mb-3"
+                             th:text="${errorMessage}">msg</div>
+
+                        <div class="mb-3">
+                            <div class="d-flex align-items-start mb-2">
+                                <i class="bi bi-calendar3 meta-icon"></i>
+                                <div class="small">
+                                    <div class="text-muted">Starts</div>
+                                    <strong th:text="${#temporals.format(event.startAt, 'dd MMM yyyy, HH:mm')}">date</strong>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-start mb-2">
+                                <i class="bi bi-calendar2-check meta-icon"></i>
+                                <div class="small">
+                                    <div class="text-muted">Ends</div>
+                                    <strong th:text="${#temporals.format(event.endAt, 'dd MMM yyyy, HH:mm')}">date</strong>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-start mb-2">
+                                <i class="bi bi-geo-alt meta-icon"></i>
+                                <div class="small">
+                                    <div class="text-muted">Location</div>
+                                    <strong th:text="${event.location}">loc</strong>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-start">
+                                <i class="bi bi-people meta-icon"></i>
+                                <div class="small">
+                                    <div class="text-muted">Availability</div>
+                                    <strong th:if="${!event.soldOut}">
+                                        <span th:text="${event.seatsRemaining}">10</span> of
+                                        <span th:text="${event.capacity}">100</span> seats left
+                                    </strong>
+                                    <strong th:if="${event.soldOut}" class="text-danger">Sold out</strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <div sec:authorize="!isAuthenticated()">
+                            <a th:href="@{/login}" class="btn btn-primary w-100">Sign in to register</a>
+                        </div>
+                        <div sec:authorize="hasRole('ATTENDEE')">
+                            <form th:action="@{|/events/${event.id}/register|}" method="post"
+                                  th:if="${!event.soldOut}">
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="bi bi-ticket-perforated"></i> Register
+                                </button>
+                            </form>
+                            <button th:if="${event.soldOut}" class="btn btn-secondary w-100" disabled>
+                                Sold out
+                            </button>
+                        </div>
+                        <div sec:authorize="hasRole('ORGANIZER') or hasRole('ADMIN')">
+                            <p class="text-muted small mb-0 text-center">
+                                Only attendees can register for events.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<div th:replace="~{fragments/layout :: footer}"></div>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+
+</body>
+</html>

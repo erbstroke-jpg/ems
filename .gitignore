@@ -34,3 +34,6 @@ build/
 
 application-local.properties
 application-prod.properties
+
+### Uploaded files ###
+/uploads/

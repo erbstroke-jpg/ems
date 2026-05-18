@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My events &middot; EMS</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+          rel="stylesheet">
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <style>
+        body { background-color: #f8f9fa; }
+        .badge-status-DRAFT { background-color: #6c757d; }
+        .badge-status-PUBLISHED { background-color: #198754; }
+        .badge-status-CANCELLED { background-color: #dc3545; }
+    </style>
+</head>
+<body class="d-flex flex-column min-vh-100">
+
+<div th:replace="~{fragments/layout :: navbar}"></div>
+
+<main class="flex-grow-1 py-5">
+    <div class="container">
+
+        <div th:if="${successMessage}"
+             class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle"></i>
+            <span th:text="${successMessage}">message</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        <div th:if="${errorMessage}"
+             class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-circle"></i>
+            <span th:text="${errorMessage}">message</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h3 mb-0">
+                <i class="bi bi-calendar-event"></i> My events
+            </h1>
+            <a th:href="@{/organizer/events/new}" class="btn btn-primary">
+                <i class="bi bi-plus-lg"></i> New event
+            </a>
+        </div>
+
+        <div th:if="${#lists.isEmpty(events)}" class="card shadow-sm">
+            <div class="card-body text-center py-5">
+                <i class="bi bi-calendar-x display-4 text-muted"></i>
+                <p class="mt-3 mb-0 text-muted">You haven't created any events yet.</p>
+            </div>
+        </div>
+
+        <div class="row g-3" th:unless="${#lists.isEmpty(events)}">
+            <div class="col-md-6 col-lg-4" th:each="event : ${events}">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h5 class="card-title mb-0" th:text="${event.title}">Title</h5>
+                            <span class="badge text-white"
+                                  th:classappend="${'badge-status-' + event.status}"
+                                  th:text="${event.status}">DRAFT</span>
+                        </div>
+                        <p class="text-muted small mb-2">
+                            <i class="bi bi-tag"></i>
+                            <span th:text="${event.category.name}">Category</span>
+                        </p>
+                        <p class="text-muted small mb-2">
+                            <i class="bi bi-geo-alt"></i>
+                            <span th:text="${event.location}">Location</span>
+                        </p>
+                        <p class="text-muted small mb-2">
+                            <i class="bi bi-clock"></i>
+                            <span th:text="${#temporals.format(event.startAt, 'dd MMM yyyy, HH:mm')}">date</span>
+                        </p>
+                        <p class="text-muted small mb-3">
+                            <i class="bi bi-people"></i>
+                            <span th:text="${event.capacity}">100</span> seats &middot;
+                            <span th:text="${event.isFree() ? 'Free' : event.price + ' KGS'}">price</span>
+                        </p>
+
+                        <div class="d-flex gap-1 flex-wrap">
+                            <a th:href="@{|/organizer/events/${event.id}/edit|}"
+                               th:if="${event.status.name() != 'CANCELLED'}"
+                               class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-pencil"></i> Edit
+                            </a>
+                            <a th:href="@{|/organizer/events/${event.id}/attendees|}"
+                               class="btn btn-sm btn-outline-info">
+                                <i class="bi bi-people"></i> Attendees
+                            </a>
+
+                            <form th:action="@{|/organizer/events/${event.id}/publish|}"
+                                  method="post" class="d-inline"
+                                  th:if="${event.status.name() == 'DRAFT'}">
+                                <button type="submit" class="btn btn-sm btn-success">
+                                    <i class="bi bi-megaphone"></i> Publish
+                                </button>
+                            </form>
+
+                            <form th:action="@{|/organizer/events/${event.id}/cancel|}"
+                                  method="post" class="d-inline"
+                                  th:if="${event.status.name() != 'CANCELLED'}"
+                                  onsubmit="return confirm('Cancel this event? This cannot be undone.');">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                    <i class="bi bi-x-circle"></i> Cancel
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</main>
+
+<div th:replace="~{fragments/layout :: footer}"></div>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+
+</body>
+</html>
